@@ -1,19 +1,34 @@
 #include <unordered_map>
 #include "iloc.h"
 
-int *memory = new int[10240];
+int memory[10240];
 std::map<int, int> registers;
 
 void exec(std::string code) {
+    if (code.substr(0, 2) != "//" && !code.empty()) {
+        //std::cout << code << std::endl;
+        std::regex cons(R"((\w+))");
+        std::smatch matches;
+        regex_search(code, matches, cons);
 
-    auto action = code.substr(0, code.find(' ')); //what tokens should we expected next
-    std::cout << std::endl;
-    if (action.substr(0, 3) == "add" || action.substr(0, 3) == "sub" || action.substr(0, 3) == "mul")
-        math(code, action[0]);
-    else if (action.substr(0, 4) == "load")
-        load(code);
-    else if (action.substr(0, 4) == "stor")
-        store(code);
+        if (matches.size() > 1) {
+            auto action = matches.str(1); //what tokens should we expected next
+
+            if (action.substr(0, 3) == "add" || action.substr(0, 3) == "sub" || action.substr(0, 3) == "mul")
+                math(code, action[0]);
+            else if (action.substr(0, 4) == "load")
+                load(code);
+            else if (action.substr(0, 4) == "stor")
+                store(code);
+            else if (action.substr(0, 4) == "outp")
+                print(code);
+        }
+    }
+}
+
+void init() {
+    memory[1024] = 1;
+    memory[1028] = 1;
 }
 
 /**
@@ -30,23 +45,25 @@ void math(std::string line, char op) {
         regex_search(line, matches, regs);
     }
     if (!matches.empty()) {
-        registers[std::atoi(matches.str(3).substr(1).c_str())] = registers[std::atoi(matches.str(1).c_str())];
+        int output = std::stoi(matches.str(3).substr(1));
+        registers[output] = registers[std::stoi(matches.str(1).substr(1))];
+
         std::string arg2 = matches.str(2);
         int val;
         if (arg2[0] == 'r')
-            val = registers[std::atoi(arg2.substr(1).c_str())];
+            val = registers[std::stoi(arg2.substr(1))];
         else
-            val = std::atoi(arg2.c_str());
+            val = std::stoi(arg2);
 
         switch (op) {
             case 'a': //addition
-                registers[std::atoi(matches.str(3).substr(1).c_str())] += val;
+                registers[output] += val;
                 break;
             case 's': //subtraction
-                registers[std::atoi(matches.str(3).substr(1).c_str())] -= val;
+                registers[output] -= val;
                 break;
             case 'm': //multiplication
-                registers[std::atoi(matches.str(3).substr(1).c_str())] *= val;
+                registers[output] *= val;
                 break;
         }
     }
@@ -65,39 +82,52 @@ void load(std::string line) {
         regex_search(line, matches, regs);
     }
 
-    if (matches.size() == 2) {
-        int output = std::atoi(matches.str(2).substr(1).c_str());
-        int reg = matches.str(1)[0] == 'r' ? std::atoi(matches.str(1).substr(1).c_str()) : std::atoi(matches.str(1).c_str());
-        registers[output] = memory[reg];
+    if (matches.size() == 3) {
+        int output = std::stoi(matches.str(2).substr(1));
+        int reg = matches.str(1)[0] == 'r' ? memory[registers[std::stoi(matches.str(1).substr(1))]] : std::stoi(
+                matches.str(1));
+        registers[output] = reg;
     } else {
-        int output = std::atoi(matches.str(3).substr(1).c_str());
-        int reg = std::atoi(matches.str(1).substr(1).c_str());
-        int addVal = std::atoi(matches.str(2).c_str());
-        registers[output] = memory[reg+addVal];
+        int output = std::stoi(matches.str(3).substr(1));
+        int reg = std::stoi(matches.str(1).substr(1));
+        int addVal = std::stoi(matches.str(2));
+        registers[output] = memory[reg + addVal];
     }
 }
 
 void store(std::string line) {
-    std::regex cons(R"((\d+)\s*=>\s*(r\d+))"); //# => r#
+    std::regex regs(R"((r\d+)\s*=>\s*(r\d+)\s*,\s*(\d+)\s*)"); //r#, # => r#
     std::smatch matches;
-    regex_search(line, matches, cons);
+    regex_search(line, matches, regs);
     if (matches.empty()) {
-        std::regex regs(R"((r\d+)\s*=>\s*(r\d+))"); // r# => r#
-        regex_search(line, matches, regs);
+        std::regex sim(R"((r\d+)\s*=>\s*(r\d+))"); //r# => r#
+        regex_search(line, matches, sim);
     }
+
+    if (matches.size() == 3) {
+        int output = registers[std::stoi(matches.str(2).substr(1))];
+        int reg = std::stoi(matches.str(1).substr(1));
+        memory[output] = registers[reg];
+    } else { //r# => r0, 0
+        int input = std::stoi(matches.str(1).substr(1));
+        int reg = registers[std::stoi(matches.str(2).substr(1))];
+        int addVal = std::stoi(matches.str(3));
+        memory[reg + addVal] = registers[input];
+    }
+}
+
+void print(std::string line) {
+    std::regex regs(R"((r\d+)\s*,\s*(\d+))"); // r# => r#
+    std::smatch matches;
+    regex_search(line, matches, regs);
     if (matches.empty()) {
-        std::regex regs(R"((r\d+)\s*,\s*(\d+)\s*=>\s*(r\d+))"); //r#, # => r#
-        regex_search(line, matches, regs);
+        std::regex cons(R"((\d+))");
+        regex_search(line, matches, cons);
     }
 
     if (matches.size() == 2) {
-        int output = std::atoi(matches.str(1).substr(1).c_str());
-        int reg = std::atoi(matches.str(2).substr(1).c_str());
-        memory[output] = registers[reg];
-    } else { //r# => r0, 0
-        int input = std::atoi(matches.str(1).substr(1).c_str());
-        int reg = std::atoi(matches.str(2).substr(1).c_str());
-        int addVal = std::atoi(matches.str(3).c_str());
-        memory[reg+addVal] = registers[input];
+        printf("%d\n", memory[std::stoi(matches.str(1))]);
+    } else {
+        printf("%d\n", memory[registers[std::stoi(matches.str(1).substr(1))] + std::stoi(matches.str(2))]);
     }
 }

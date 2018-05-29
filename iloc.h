@@ -8,5 +8,7 @@ void exec(std::string);
 void math(std::string, char op);
 void store(std::string);
 void load(std::string);
+void print(std::string);
+void init();
 
 #endif //ILOCSIM_ILOC_H

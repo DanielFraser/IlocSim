@@ -11,8 +11,10 @@
 #include <direct.h>
 #define GetCurrentDir _getcwd
 #else
+
 #include <unistd.h>
 #include <cerrno>
+
 #define GetCurrentDir getcwd
 #endif
 
@@ -27,15 +29,16 @@ int main(int argc, char **argv) {
 
     std::ifstream file(filename);
     std::string sent;
-    while (std::getline(file, sent))
-    {
-        std::cout << sent << std::endl;
+    init();
+    while (std::getline(file, sent)) {
+        //std::cout << sent << std::endl;
         exec(sent);
     }
+    file.close();
     return 0;
 }
 
-char* SplitFilename(const std::string &str) {
+char *SplitFilename(const std::string &str) {
     std::size_t found = str.find_last_of('/');
     return const_cast<char *>(str.substr(0, found).c_str());
 }
