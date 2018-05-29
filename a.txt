@@ -1,0 +1,10 @@
+lalala2
+a
+b
+c
+d
+e
+f
+g
+addi r1, 0 => r5
+add r1, r0 => r5
