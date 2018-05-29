@@ -6,7 +6,6 @@ std::map<int, int> registers;
 
 void exec(std::string code) {
     if (code.substr(0, 2) != "//" && !code.empty()) {
-        //std::cout << code << std::endl;
         std::regex cons(R"((\w+))");
         std::smatch matches;
         regex_search(code, matches, cons);
@@ -70,16 +69,16 @@ void math(std::string line, char op) {
 }
 
 void load(std::string line) {
-    std::regex cons(R"((\d+)\s*=>\s*(r\d+))"); //# => r#
+    std::regex regs(R"((r\d+)\s*,\s*(\d+)\s*=>\s*(r\d+))"); //r#, # => r#
     std::smatch matches;
-    regex_search(line, matches, cons);
+    regex_search(line, matches, regs);
     if (matches.empty()) {
-        std::regex regs(R"((r\d+)\s*=>\s*(r\d+))"); // r# => r#
-        regex_search(line, matches, regs);
+        std::regex regs1(R"((r\d+)\s*=>\s*(r\d+))"); // r# => r#
+        regex_search(line, matches, regs1);
     }
     if (matches.empty()) {
-        std::regex regs(R"((r\d+)\s*,\s*(\d+)\s*=>\s*(r\d+))"); //r#, # => r#
-        regex_search(line, matches, regs);
+        std::regex cons(R"((\d+)\s*=>\s*(r\d+))"); //# => r#
+        regex_search(line, matches, cons);
     }
 
     if (matches.size() == 3) {
@@ -89,7 +88,7 @@ void load(std::string line) {
         registers[output] = reg;
     } else {
         int output = std::stoi(matches.str(3).substr(1));
-        int reg = std::stoi(matches.str(1).substr(1));
+        int reg = registers[std::stoi(matches.str(1).substr(1))];
         int addVal = std::stoi(matches.str(2));
         registers[output] = memory[reg + addVal];
     }
