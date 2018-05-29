@@ -16,12 +16,9 @@
 #define GetCurrentDir getcwd
 #endif
 
-int main() {
-    std::string filename;
+int main(int argc, char **argv) {
+    std::string filename = argv[1];
     std::ofstream fileC;
-
-    std::cout << "which file do you want to open? ";
-    std::cin >> filename;
 
     filename = strcat(getDirectory(), "/") + filename;
 
@@ -39,10 +36,7 @@ int main() {
 }
 
 char* SplitFilename(const std::string &str) {
-//    std::cout << "Splitting: " << str << '\n';
     std::size_t found = str.find_last_of('/');
-//    std::cout << " path: " << str.substr(0, found) << '\n';
-//    std::cout << " file: " << str.substr(found + 1) << '\n';
     return const_cast<char *>(str.substr(0, found).c_str());
 }
 
@@ -57,4 +51,3 @@ char *getDirectory() {
 
     return SplitFilename(cCurrentPath);
 }
-

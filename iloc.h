@@ -5,9 +5,7 @@
 #include <regex>
 
 void exec(std::string);
-void add(std::string);
-void sub(std::string);
-void mult(std::string);
+void math(std::string, char op);
 void store(std::string);
 void load(std::string);
 
