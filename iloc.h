@@ -10,5 +10,6 @@ void store(std::string);
 void load(std::string);
 void print(std::string);
 void init();
+void shift(std::string);
 
 #endif //ILOCSIM_ILOC_H

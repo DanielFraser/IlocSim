@@ -1,7 +1,7 @@
 #include <unordered_map>
 #include "iloc.h"
 
-int memory[10240];
+int memory[20480];
 std::map<int, int> registers;
 
 void exec(std::string code) {
@@ -21,6 +21,10 @@ void exec(std::string code) {
                 store(code);
             else if (action.substr(0, 4) == "outp")
                 print(code);
+            else if (action.substr(1, 6) == "shift")
+                shift(code);
+            else
+                printf("unknown: %s\n", action.c_str());
         }
     }
 }
@@ -65,7 +69,22 @@ void math(std::string line, char op) {
                 registers[output] *= val;
                 break;
         }
+
+        //printf("value: %d\n", registers[output]);
     }
+}
+
+void shift(std::string line){
+    std::regex regs(R"((r\d+)\s*,\s*(r\d+)\s*=>\s*(r\d+))"); //r#, # => r#
+    std::smatch matches;
+    regex_search(line, matches, regs);
+    int output = std::stoi(matches.str(3).substr(1));
+    int reg1 = registers[std::stoi(matches.str(1).substr(1))];
+    int reg2 = registers[std::stoi(matches.str(2).substr(1))];
+    if(line[0] == 'l') //left shift
+        registers[output] = reg1 << reg2;
+    else //right shift
+        registers[output] = reg1 >> reg2;
 }
 
 void load(std::string line) {

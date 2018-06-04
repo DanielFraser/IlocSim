@@ -31,7 +31,7 @@ int main(int argc, char **argv) {
     std::string sent;
     init();
     while (std::getline(file, sent)) {
-        std::cout << sent << std::endl;
+        //std::cout << sent << std::endl;
         exec(sent);
     }
     file.close();
